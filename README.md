@@ -26,3 +26,66 @@ Requires **Python 3.9+** and **MuJoCo >= 3.2** (for `MjSpec` support).
 
 ```bash
 pip install mujoco mediapy matplotlib numpy gymnasium
+```
+
+*Note: On headless CPU environments without EGL GPU rendering, install OSMesa (`apt install libosmesa6-dev`) and set `export MUJOCO_GL=osmesa` before running.*
+
+## Usage
+
+### 1. Run the Scripted Simulation & Render Video
+```python
+from toss_sim import TossSim, make_video
+
+sim = TossSim(pin_base=True)
+log = sim.run(t_total=3.0, render=True, fps=60, vz=1.5, stroke=0.12)
+print("Caught:", log["caught"])
+
+# Generates a side-by-side MP4 with simulation video and live z/y trajectory plots
+make_video(sim, log, path="apple_toss.mp4")
+```
+
+### 2. Evaluate Robustness Across Launch Speeds
+```python
+from toss_sim import TossSim, success_sweep
+
+sim = TossSim(pin_base=True)
+vzs, rates = success_sweep(sim, vzs=(1.2, 1.5, 1.8), n=20)
+```
+
+### 3. Train an RL Catching Policy (Gymnasium)
+```python
+from toss_env import AppleCatchEnv
+
+env = AppleCatchEnv(ctrl_dt=0.02, max_time=1.5)
+obs, info = env.reset()
+obs, reward, terminated, truncated, info = env.step(env.action_space.sample())
+```
+
+## Acknowledgments & Citations
+
+This project dynamically fetches and modifies the Unitree G1 model from [MuJoCo Menagerie](https://github.com/google-deepmind/mujoco_menagerie) (Apache 2.0 License). If you use this code or model in academic work, please cite:
+
+```bibtex
+@software{menagerie2022github,
+  author = {Zakka, Kevin and Tassa, Yuval and {MuJoCo Menagerie Contributors}},
+  title = {{MuJoCo Menagerie: A collection of high-quality simulation models for MuJoCo}},
+  url = {[http://github.com/google-deepmind/mujoco_menagerie](http://github.com/google-deepmind/mujoco_menagerie)},
+  year = {2022},
+}
+
+@inproceedings{todorov2012mujoco,
+  title={MuJoCo: A physics engine for model-based control},
+  author={Todorov, Emanuel and Erez, Tom and Tassa, Yuval},
+  booktitle={2012 IEEE/RSJ International Conference on Intelligent Robots and Systems},
+  pages={5026--5033},
+  year={2012},
+  organization={IEEE}
+}
+
+@article{towers2024gymnasium,
+  title={Gymnasium: A Standard Interface for Reinforcement Learning Environments},
+  author={Towers, Mark and Kwiatkowski, Ariel and Terry, Jordan and Balis, John U and De Cola, Gianluca and Deleu, Tristan and Goul{\~a}o, Manuel and Kallinteris, Andreas and Krimmel, Markus and KG, Arjun and others},
+  journal={arXiv preprint arXiv:2407.17032},
+  year={2024}
+}
+```
